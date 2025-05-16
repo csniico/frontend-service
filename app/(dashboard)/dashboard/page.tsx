@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import HomeClient from '@/app/home-client';
 import ProtectedRoute from '@/components/protected-route';
+import { AdminDashboard } from '@/components/admin-dashboard';
+import { UserDashboard } from '@/components/user-dashboard';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -16,10 +16,15 @@ export default function DashboardPage() {
             Welcome, {user?.firstName || 'User'}!
           </h1>
           <p className="text-muted-foreground">
-            Manage your tasks and stay organized
+            {user?.role === 'admin' 
+              ? 'Manage all tasks and assign them to users' 
+              : 'View and update your assigned tasks'}
           </p>
         </div>
-        <HomeClient />
+        
+
+        
+        {user?.role === 'admin' ? <AdminDashboard /> : <UserDashboard />}
       </div>
     </ProtectedRoute>
   );

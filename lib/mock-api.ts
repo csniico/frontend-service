@@ -91,13 +91,14 @@ export async function registerUser(userData: RegisterData): Promise<UserProfile>
     throw new Error('Email already in use');
   }
   
-  // Create new user
+  // Create new user (default role is 'user')
   const newUser: User = {
     id: Date.now().toString(),
     firstName: userData.firstName,
     lastName: userData.lastName,
     email: userData.email,
     password: userData.password,
+    role: 'user', // Default role
   };
   
   // Add user to storage
@@ -190,7 +191,49 @@ export async function fetchTodos(): Promise<Todo[]> {
   }
   
   const todos = getTodos();
-  return todos[currentUser.id] || [];
+  
+  if (currentUser.role === 'admin') {
+    // Admin can see all todos
+    return Object.values(todos).flat();
+  } else {
+    // Regular users can only see todos assigned to them
+    const allTodos = Object.values(todos).flat();
+    return allTodos.filter(todo => todo.userId === currentUser.id);
+  }
+}
+
+// Admin-specific function to fetch all todos
+export async function fetchAllTodos(): Promise<Todo[]> {
+  await delay(800); // Simulate network delay
+  
+  const currentUser = getCurrentUserFromStorage();
+  if (!currentUser) {
+    throw new Error('Not authenticated');
+  }
+  
+  if (currentUser.role !== 'admin') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  
+  const todos = getTodos();
+  return Object.values(todos).flat();
+}
+
+// Admin-specific function to fetch all users
+export async function fetchAllUsers(): Promise<UserProfile[]> {
+  await delay(800); // Simulate network delay
+  
+  const currentUser = getCurrentUserFromStorage();
+  if (!currentUser) {
+    throw new Error('Not authenticated');
+  }
+  
+  if (currentUser.role !== 'admin') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  
+  const users = getUsers();
+  return users.map(user => getUserProfile(user));
 }
 
 export async function createTodo(todo: Omit<Todo, 'id'>): Promise<Todo> {

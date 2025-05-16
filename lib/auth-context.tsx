@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, UserProfile, LoginCredentials, RegisterData } from './types';
 import * as api from './mock-api';
 import { useToast } from '@/hooks/use-toast';
+import { getDashboardPath } from './utils';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -50,7 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: 'Success',
         description: 'Logged in successfully',
       });
-      router.push('/dashboard');
+      
+      // Role-based redirection
+      const dashboardPath = getDashboardPath(userData.role);
+      router.push(dashboardPath);
     } catch (error) {
       if (error instanceof Error) {
         toast({
@@ -74,7 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: 'Success',
         description: 'Account created successfully',
       });
-      router.push('/dashboard');
+      
+      // Role-based redirection
+      const dashboardPath = getDashboardPath(userData.role);
+      router.push(dashboardPath);
     } catch (error) {
       if (error instanceof Error) {
         toast({

@@ -3,16 +3,31 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { canAccessRoute } from '@/lib/utils';
+import { UserRole } from '@/lib/types';
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: UserRole | 'any';
+}
+
+export default function ProtectedRoute({ 
+  children, 
+  requiredRole = 'any' 
+}: ProtectedRouteProps) {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/');
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.replace('/');
+      } else if (!canAccessRoute(user, requiredRole)) {
+        // Redirect to dashboard if user doesn't have required role
+        router.replace('/dashboard');
+      }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, user, requiredRole]);
 
   if (isLoading) {
     return (
