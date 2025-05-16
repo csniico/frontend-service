@@ -1,7 +1,7 @@
 # 📛 Todo App Frontend
+
 [![Build and Test Checks - CI](https://github.com/godcandidate/todo_frontend/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/godcandidate/todo_frontend/actions/workflows/ci-cd.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/your-netlify-id/deploy-status)](https://app.netlify.com/sites/your-site-name/deploys)
-
 
 🔗 [Live Demo](#) (Add a working link if available)
 
@@ -62,7 +62,7 @@ This Todo App serves as a simple task management tool aimed at helping users org
 
 ## 📷 Screenshots
 
-![Todo App Screenshot](./todo-dashboard.png)
+![Todo App Screenshot](./dashboard.png)
 
 ---
 
@@ -73,18 +73,21 @@ Follow these steps to set up the project on your local machine:
 ### Prerequisites
 
 Ensure you have the following installed:
+
 - [Node.js](https://nodejs.org/) (v16 or later)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/your-username/todo-app.git
    cd todo-app
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    # or
@@ -92,6 +95,7 @@ Ensure you have the following installed:
    ```
 
 3. Start the development server:
+
    ```bash
    npm run dev
    # or
@@ -99,6 +103,7 @@ Ensure you have the following installed:
    ```
 
 4. Open your browser and navigate to:
+
    ```
    http://localhost:3000
    ```
@@ -133,7 +138,7 @@ docker run -p 3000:3000 -e NODE_ENV=production todo-app
 Create a `docker-compose.yml` file in the root directory:
 
 ```yaml
-version: '3'
+version: "3"
 
 services:
   frontend:
@@ -157,18 +162,21 @@ docker-compose up
 Use these credentials to test the application:
 
 ### Admin User
+
 - **Email:** john@example.com
 - **Password:** password123
 - **Role:** Admin
 - **Features:** Full access to create, edit, delete, and assign tasks
 
 ### Regular User
+
 - **Email:** jane@example.com
 - **Password:** password123
 - **Role:** User
 - **Features:** Can view assigned tasks and update their status
 
 ### Guest User
+
 - **Email:** guest@example.com
 - **Password:** password123
 - **Role:** User
@@ -206,6 +214,7 @@ Use these credentials to test the application:
 ```
 
 ### Key Folders
+
 - **`app/`**: Contains the main app layout and pages.
 - **`components/`**: Includes reusable UI and page-specific components.
 - **`hooks/`** Houses custom React hooks.
@@ -230,6 +239,7 @@ To tailor the app to your needs:
 To deploy the app:
 
 1. Build the production-ready version:
+
    ```bash
    npm run build
    # or
@@ -250,6 +260,7 @@ You can also deploy it to platforms like [Vercel](https://vercel.com/) or [Netli
 ## 🚶 Approach
 
 The Todo App was developed using the following principles:
+
 - Component-based architecture for reusable and maintainable code.
 - API integration using RESTful design principles.
 - Responsive web design for accessibility across devices.
@@ -300,5 +311,6 @@ This project is licensed under the [MIT License](./LICENSE).
 ## Contact
 
 For questions or feedback, reach out via:
+
 - Email: your.email@example.com
 - GitHub: [your-username](https://github.com/your-username)
