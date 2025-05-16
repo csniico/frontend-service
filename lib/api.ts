@@ -1,4 +1,4 @@
-import { Todo } from "./types";
+import { Todo, LoginCredentials, RegisterData, UserProfile } from "./types";
 
 // env backend api
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -66,4 +66,89 @@ export async function searchTodos(query: string) {
   );
   if (!response.ok) throw new Error("Failed to search todos");
   return response.json();
+}
+
+// Authentication API functions
+export async function loginUser(credentials: LoginCredentials) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to login");
+  }
+  
+  return response.json();
+}
+
+export async function registerUser(userData: RegisterData) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(userData),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to register");
+  }
+  
+  return response.json();
+}
+
+export async function logoutUser() {
+  const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
+    method: "POST",
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to logout");
+  }
+  
+  return true;
+}
+
+export async function getCurrentUser() {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  
+  if (!response.ok) {
+    if (response.status === 401) {
+      return null; // Not authenticated
+    }
+    throw new Error("Failed to get current user");
+  }
+  
+  return response.json();
+}
+
+export async function updateUserProfile(userId: string, profileData: Partial<UserProfile>) {
+  const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profileData),
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to update profile");
+  }
+  
+  return response.json();
+}
+
+export async function deleteUserAccount(userId: string) {
+  const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+    method: "DELETE",
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to delete account");
+  }
+  
+  return true;
 }

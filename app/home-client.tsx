@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
-import * as api from '@/lib/api';
+import * as api from '@/lib/mock-api';
 
 export default function HomeClient() {
   const [todos, setTodos] = useState<Todo[]>([]);
