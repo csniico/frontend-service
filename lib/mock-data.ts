@@ -1,97 +1,102 @@
-import { Todo, User, UserProfile } from './types';
+import { Todo, User, UserProfile } from "./types";
 
 // Mock Users
 export const mockUsers: User[] = [
   {
-    id: '1',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john@example.com',
-    password: 'password123',
-    role: 'admin',
+    id: "1",
+    firstName: "John",
+    lastName: "Doe",
+    email: "john@example.com",
+    password: "password123",
+    role: "admin",
   },
   {
-    id: '2',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    email: 'jane@example.com',
-    password: 'password123',
-    role: 'user',
+    id: "2",
+    firstName: "Jane",
+    lastName: "Smith",
+    email: "jane@example.com",
+    password: "password123",
+    role: "user",
   },
   {
-    id: '3',
-    email: 'guest@example.com',
-    password: 'password123',
-    role: 'user',
+    id: "3",
+    email: "guest@example.com",
+    password: "password123",
+    role: "user",
   },
 ];
 
 // Mock Todos
 export const mockTodos: Record<string, Todo[]> = {
-  '1': [
+  "1": [
     {
-      id: '101',
-      title: 'Complete project proposal',
-      description: 'Finish the project proposal for the client meeting',
-      priority: 'high',
-      date: '2025-05-20',
+      id: "101",
+      title: "Frontend tier",
+      description:
+        "Build the frontend application using React and Tailwind CSS",
+      priority: "high",
+      date: "2025-06-01",
+      active: true,
+      category: "Development",
+      userId: "1",
+    },
+    {
+      id: "102",
+      title: "Backend tier",
+      description: "Build backend functionalities using Node.js and Express",
+      priority: "high",
+      date: "2025-06-02",
+      active: true,
+      category: "Development",
+      userId: "1",
+    },
+    {
+      id: "103",
+      title: "Observability tier",
+      description:
+        "Integrate traces, logs, and metrics into the application using tools like OpenTelemetry, Prometheus, and Grafana",
+      priority: "medium",
+      date: "2025-06-10",
       active: false,
-      category: 'Work',
-      userId: '1',
-    },
-    {
-      id: '102',
-      title: 'Grocery shopping',
-      description: 'Buy milk, eggs, bread, and vegetables',
-      priority: 'medium',
-      date: '2025-05-17',
-      active: true,
-      category: 'Personal',
-      userId: '1',
-    },
-    {
-      id: '103',
-      title: 'Gym workout',
-      description: 'Complete 30 minutes of cardio and strength training',
-      priority: 'low',
-      date: '2025-05-18',
-      active: true,
-      category: 'Health',
-      userId: '1',
+      category: "DevOps",
+      userId: "1",
     },
   ],
-  '2': [
+  "2": [
     {
-      id: '201',
-      title: 'Team meeting',
-      description: 'Weekly team sync to discuss project progress',
-      priority: 'medium',
-      date: '2025-05-19',
+      id: "201",
+      title: "Infrastructure tier",
+      description:
+        "Use Terraform to set up AWS resources including EC2, S3, and RDS instances",
+      priority: "medium",
+      date: "2025-06-05",
       active: true,
-      category: 'Work',
-      userId: '2',
+      category: "DevOps",
+      userId: "2",
     },
     {
-      id: '202',
-      title: 'Pay bills',
-      description: 'Pay electricity, water, and internet bills',
-      priority: 'high',
-      date: '2025-05-25',
+      id: "202",
+      title: "Pipeline tier",
+      description:
+        "Set up Jenkins to automate build, test, and deployment pipeline",
+      priority: "high",
+      date: "2025-06-08",
       active: true,
-      category: 'Finance',
-      userId: '2',
+      category: "DevOps",
+      userId: "2",
     },
   ],
-  '3': [
+  "3": [
     {
-      id: '301',
-      title: 'Learn React',
-      description: 'Complete React tutorial on official documentation',
-      priority: 'medium',
-      date: '2025-05-30',
+      id: "301",
+      title: "Cloud Architecture Review",
+      description:
+        "Review cloud design for scalability and security compliance",
+      priority: "medium",
+      date: "2025-06-12",
       active: true,
-      category: 'Learning',
-      userId: '3',
+      category: "Architecture",
+      userId: "3",
     },
   ],
 };
@@ -104,7 +109,7 @@ export const getUserProfile = (user: User): UserProfile => {
 
 // Local storage keys
 export const STORAGE_KEYS = {
-  CURRENT_USER: 'taskmaster_current_user',
-  USERS: 'taskmaster_users',
-  TODOS: 'taskmaster_todos',
+  CURRENT_USER: "taskmaster_current_user",
+  USERS: "taskmaster_users",
+  TODOS: "taskmaster_todos",
 };
