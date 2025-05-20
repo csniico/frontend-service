@@ -3,9 +3,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, UserProfile, LoginCredentials, RegisterData } from './types';
-import * as api from './mock-api';
+import { authService } from './api-service';
 import { useToast } from '@/hooks/use-toast';
 import { getDashboardPath } from './utils';
+
+// Local storage key for user data
+const USER_STORAGE_KEY = 'taskmaster_current_user';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -27,11 +30,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkAuthStatus = async () => {
+    // Check if user is already logged in from localStorage
+    const checkAuthStatus = () => {
       try {
-        const userData = await api.getCurrentUser();
-        setUser(userData);
+        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
       } catch (error) {
         console.error('Authentication check failed:', error);
       } finally {
@@ -45,8 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
     try {
-      const userData = await api.loginUser(credentials);
+      const userData = await authService.signin(credentials);
       setUser(userData);
+      
+      // Save user to localStorage
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+      
       toast({
         title: 'Success',
         description: 'Logged in successfully',
@@ -72,8 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: RegisterData) => {
     setIsLoading(true);
     try {
-      const userData = await api.registerUser(data);
+      const userData = await authService.signup(data);
       setUser(userData);
+      
+      // Save user to localStorage
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+      
       toast({
         title: 'Success',
         description: 'Account created successfully',
@@ -98,7 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await api.logoutUser();
+      // Remove user from localStorage
+      localStorage.removeItem(USER_STORAGE_KEY);
       setUser(null);
       toast({
         title: 'Success',
@@ -118,8 +132,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     try {
-      const updatedUser = await api.updateUserProfile(user.id, data);
+      // For now, we'll just update the local state since we don't have an API endpoint
+      const updatedUser = { ...user, ...data };
       setUser(updatedUser);
+      
+      // Update localStorage
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+      
       toast({
         title: 'Success',
         description: 'Profile updated successfully',
@@ -138,7 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     try {
-      await api.deleteUserAccount(user.id);
+      // For now, we'll just remove from localStorage since we don't have an API endpoint
+      localStorage.removeItem(USER_STORAGE_KEY);
       setUser(null);
       toast({
         title: 'Success',

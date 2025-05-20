@@ -15,13 +15,23 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth-context';
-import { RegisterData } from '@/lib/types';
+import { RegisterData, UserRole } from '@/lib/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const registerSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  role: z.enum(['admin', 'user'], {
+    required_error: 'Please select a role',
+  }),
 });
 
 export function RegisterForm() {
@@ -35,6 +45,7 @@ export function RegisterForm() {
       lastName: '',
       email: '',
       password: '',
+      role: 'user', // Default role is user
     },
   });
 
@@ -102,6 +113,27 @@ export function RegisterForm() {
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
