@@ -43,3 +43,14 @@ export interface RegisterData {
   password: string;
   role: UserRole;
 }
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  assignedTo: string[];
+  dueDate: string;
+  category: string;
+}

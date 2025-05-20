@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export type SearchFilters = {
+  query?: string;
   title?: string;
   priority?: 'low' | 'medium' | 'high' | '';
   category?: string;
@@ -35,6 +36,7 @@ interface TaskSearchProps {
 
 export function TaskSearch({ onSearch }: TaskSearchProps) {
   const [filters, setFilters] = useState<SearchFilters>({
+    query: '',
     title: '',
     priority: '',
     category: '',

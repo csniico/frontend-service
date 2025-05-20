@@ -1,14 +1,22 @@
-import axios from 'axios';
-import { LoginCredentials, RegisterData, UserProfile } from './types';
+import axios from "axios";
+import { LoginCredentials, RegisterData, UserProfile, Task } from "./types";
 
-// Base URL for the API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
+// Base URLs for the APIs
+const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
+const TASK_API_URL = process.env.NEXT_PUBLIC_TASK_API_URL;
 
-// Create an axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
+// Create axios instances with default configs
+const authApi = axios.create({
+  baseURL: AUTH_API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
+  },
+});
+
+const taskApi = axios.create({
+  baseURL: TASK_API_URL,
+  headers: {
+    "Content-Type": "application/json",
   },
 });
 
@@ -17,62 +25,98 @@ export const authService = {
   // Register a new user
   signup: async (userData: RegisterData): Promise<UserProfile> => {
     try {
-      const response = await api.post('/signup', userData);
+      const response = await authApi.post("/signup", userData);
       return response.data.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      throw new Error(error.response?.data?.message || "Registration failed");
     }
   },
 
   // Login a user
   signin: async (credentials: LoginCredentials): Promise<UserProfile> => {
     try {
-      const response = await api.post('/signin', credentials);
+      const response = await authApi.post("/signin", credentials);
       return response.data.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Invalid email or password');
+      throw new Error(
+        error.response?.data?.message || "Invalid email or password"
+      );
+    }
+  },
+
+  // Get all users
+  getAllUsers: async (): Promise<UserProfile[]> => {
+    try {
+      const response = await authApi.get("/users");
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Failed to fetch users");
     }
   },
 };
 
 // Task Service
 export const taskService = {
-  // Get all tasks for the current user
-  getTasks: async (): Promise<any[]> => {
+  // Get all tasks (for admin dashboard)
+  getAllTasks: async (): Promise<Task[]> => {
     try {
-      const response = await api.get('/tasks');
+      const response = await taskApi.get("/tasks");
       return response.data.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch tasks');
+      throw new Error(error.response?.data?.message || "Failed to fetch tasks");
+    }
+  },
+
+  // Get tasks for a specific user
+  getUserTasks: async (email: string): Promise<Task[]> => {
+    try {
+      const response = await taskApi.get(`/tasks/user?email=${email}`);
+      console.log(response);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch user tasks"
+      );
     }
   },
 
   // Create a new task
-  createTask: async (taskData: any): Promise<any> => {
+  createTask: async (taskData: Omit<Task, "id">): Promise<Task> => {
     try {
-      const response = await api.post('/tasks', taskData);
+      const response = await taskApi.post("/create/", taskData);
       return response.data.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to create task');
+      throw new Error(error.response?.data?.message || "Failed to create task");
     }
   },
 
   // Update an existing task
-  updateTask: async (taskId: string, taskData: any): Promise<any> => {
+  updateTask: async (
+    taskId: number,
+    taskData: Partial<Task>
+  ): Promise<Task> => {
     try {
-      const response = await api.put(`/tasks/${taskId}`, taskData);
-      return response.data.data;
+      // Use PATCH for status updates, PUT for other updates
+      if (Object.keys(taskData).length === 1 && 'status' in taskData) {
+        // For status changes, use PATCH /tasks?id=taskId
+        const response = await taskApi.patch(`/tasks?id=${taskId}`, taskData);
+        return response.data.data;
+      } else {
+        // For other updates, use PUT /tasks/taskId
+        const response = await taskApi.put(`/tasks/${taskId}`, taskData);
+        return response.data.data;
+      }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to update task');
+      throw new Error(error.response?.data?.message || "Failed to update task");
     }
   },
 
   // Delete a task
-  deleteTask: async (taskId: string): Promise<void> => {
+  deleteTask: async (taskId: number): Promise<void> => {
     try {
-      await api.delete(`/tasks/${taskId}`);
+      await taskApi.delete(`/tasks?id=${taskId}`);
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to delete task');
+      throw new Error(error.response?.data?.message || "Failed to delete task");
     }
   },
 };

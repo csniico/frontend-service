@@ -1,166 +1,183 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { Todo } from '@/lib/types';
-import * as api from '@/lib/mock-api';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/lib/auth-context';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CheckCircle, Circle, PenSquare } from 'lucide-react';
-import { StatusChangeDialog } from './status-change-dialog';
+import { useState, useEffect, useMemo } from "react";
+import { Task } from "@/lib/types";
+import { taskService } from "@/lib/api-service";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Circle, PenSquare } from "lucide-react";
+import { StatusChangeDialog } from "./status-change-dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { TaskSearch, SearchFilters } from './task-search';
-import { format } from 'date-fns';
+} from "@/components/ui/select";
+import { TaskSearch, SearchFilters } from "./task-search";
+import { format } from "date-fns";
 
 export function UserDashboard() {
-  const [allTodos, setAllTodos] = useState<Todo[]>([]);
+  const [userTasks, setUserTasks] = useState<Task[]>([]);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
-  const [selectedTask, setSelectedTask] = useState<Todo | null>(null);
-  const [newStatus, setNewStatus] = useState<'pending' | 'in-progress' | 'completed' | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [newStatus, setNewStatus] = useState<
+    "pending" | "in-progress" | "completed" | null
+  >(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      loadTodos();
+      loadUserTasks();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const loadTodos = async () => {
+  const loadUserTasks = async () => {
     try {
-      const data = await api.fetchTodos();
-      setAllTodos(data);
+      if (user?.email) {
+        console.log(user?.email);
+        const data = await taskService.getUserTasks(user.email);
+        setUserTasks(data);
+      }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load tasks',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load tasks",
+        variant: "destructive",
       });
     }
   };
-  
+
   const handleSearch = (filters: SearchFilters) => {
     setSearchFilters(filters);
   };
 
-  type TaskStatus = 'pending' | 'in-progress' | 'completed';
+  type TaskStatus = "pending" | "in-progress" | "completed";
 
-  const openStatusChangeDialog = (task: Todo, status: TaskStatus) => {
+  const openStatusDialog = (task: Task, newStatus: TaskStatus) => {
     setSelectedTask(task);
-    setNewStatus(status);
+    setNewStatus(newStatus);
     setIsStatusDialogOpen(true);
   };
 
-  const handleUpdateStatus = async () => {
-    if (!selectedTask || !newStatus) return;
-    
+  const handleStatusChange = async (
+    taskId: number,
+    status: "pending" | "in-progress" | "completed"
+  ) => {
     try {
-      // For 'completed' status, set active to false, otherwise true
-      const active = newStatus !== 'completed';
-      
-      await api.updateTodo(selectedTask.id, { 
-        active,
-        status: newStatus 
-      });
-      
-      await loadTodos();
-      
+      await taskService.updateTask(taskId, { status });
+      await loadUserTasks();
+      setIsStatusDialogOpen(false);
+      setSelectedTask(null);
+      setNewStatus(null);
       toast({
-        title: 'Status Updated',
-        description: `Task status changed to ${newStatus}`,
+        title: "Success",
+        description: "Task status updated successfully",
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to update task status',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
       });
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
+  const getPriorityBadge = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case "high":
+        return <Badge variant="destructive">High</Badge>;
+      case "medium":
+        return <Badge variant="default">Medium</Badge>;
+      case "low":
+        return <Badge variant="outline">Low</Badge>;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="outline">{priority}</Badge>;
     }
   };
 
-  // Filter todos based on search criteria
-  const filteredTodos = useMemo(() => {
-    return allTodos.filter(todo => {
-      // Title filter
-      if (searchFilters.title && !todo.title.toLowerCase().includes(searchFilters.title.toLowerCase())) {
-        return false;
-      }
-      
-      // Priority filter
-      if (searchFilters.priority && todo.priority !== searchFilters.priority) {
-        return false;
-      }
-      
-      // Category filter
-      if (searchFilters.category && !todo.category.toLowerCase().includes(searchFilters.category.toLowerCase())) {
-        return false;
-      }
-      
-      // Status filter
-      if (searchFilters.status) {
-        if (searchFilters.status === 'completed' && todo.active) {
-          return false;
-        } else if (searchFilters.status === 'pending' && (!todo.active || todo.status === 'in-progress')) {
-          return false;
-        } else if (searchFilters.status === 'in-progress' && todo.status !== 'in-progress') {
-          return false;
-        }
-      }
-      
-      // Date filter
-      if (searchFilters.date) {
-        const todoDate = new Date(todo.date);
-        const filterDate = new Date(searchFilters.date);
-        
-        if (
-          todoDate.getFullYear() !== filterDate.getFullYear() ||
-          todoDate.getMonth() !== filterDate.getMonth() ||
-          todoDate.getDate() !== filterDate.getDate()
-        ) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
-  }, [allTodos, searchFilters]);
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>();
+    userTasks.forEach((task) => uniqueCategories.add(task.category));
+    return Array.from(uniqueCategories);
+  }, [userTasks]);
 
-  if (allTodos.length === 0) {
+  const filteredTasks = useMemo(() => {
+    let filtered = [...userTasks];
+
+    // Apply search filters
+    if (searchFilters.query) {
+      const query = searchFilters.query.toLowerCase();
+      filtered = filtered.filter(
+        (task) =>
+          task.title.toLowerCase().includes(query) ||
+          task.description.toLowerCase().includes(query) ||
+          task.category.toLowerCase().includes(query)
+      );
+    }
+
+    if (searchFilters.status) {
+      filtered = filtered.filter(
+        (task) => task.status === searchFilters.status
+      );
+    }
+
+    if (searchFilters.priority) {
+      filtered = filtered.filter(
+        (task) => task.priority === searchFilters.priority
+      );
+    }
+
+    if (searchFilters.category) {
+      filtered = filtered.filter(
+        (task) => task.category === searchFilters.category
+      );
+    }
+
+    return filtered;
+  }, [userTasks, searchFilters]);
+
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600';
+      case 'in-progress':
+        return 'text-blue-600';
+      case 'pending':
+        return 'text-yellow-600';
+      default:
+        return '';
+    }
+  };
+
+  const formatStatus = (status: string): string => {
+    return status
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  if (userTasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <h2 className="text-2xl font-semibold mb-2">No Tasks Assigned</h2>
-        <p className="text-muted-foreground">You don't have any tasks assigned to you yet.</p>
+        <p className="text-muted-foreground">
+          You don't have any tasks assigned to you yet.
+        </p>
       </div>
     );
   }
@@ -168,11 +185,15 @@ export function UserDashboard() {
   return (
     <div className="space-y-6">
       <TaskSearch onSearch={handleSearch} />
-      
-      {filteredTodos.length === 0 && (
+
+      {filteredTasks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 bg-gray-50 rounded-md">
-          <h3 className="text-xl font-semibold mb-2">No matching tasks found</h3>
-          <p className="text-muted-foreground">Try adjusting your search filters</p>
+          <h3 className="text-xl font-semibold mb-2">
+            No matching tasks found
+          </h3>
+          <p className="text-muted-foreground">
+            Try adjusting your search filters
+          </p>
         </div>
       )}
 
@@ -191,31 +212,33 @@ export function UserDashboard() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredTodos.map((todo, index) => (
-            <TableRow key={todo.id} className={!todo.active ? "opacity-60" : ""}>
+          {filteredTasks.map((task, index) => (
+            <TableRow
+              key={task.id}
+              className={task.status === "completed" ? "opacity-60" : ""}
+            >
               <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>{todo.title}</TableCell>
-              <TableCell className="max-w-xs truncate">{todo.description}</TableCell>
-              <TableCell>
-                <Badge className={getPriorityColor(todo.priority)}>
-                  {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
-                </Badge>
+              <TableCell>{task.title}</TableCell>
+              <TableCell className="max-w-md">
+                <div className="whitespace-normal break-words line-clamp-3 hover:line-clamp-none transition-all duration-200 cursor-pointer">
+                  {task.description}
+                </div>
               </TableCell>
-              <TableCell>{todo.category}</TableCell>
-              <TableCell>{new Date(todo.date).toLocaleDateString()}</TableCell>
+              <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+              <TableCell>{task.category}</TableCell>
               <TableCell>
-                <Badge 
-                  className={`${todo.status === 'in-progress' ? 'bg-blue-100 text-blue-800' : 
-                    todo.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                    'bg-yellow-100 text-yellow-800'}`}
-                >
-                  {todo.status === 'in-progress' ? 'In Progress' : 
-                   todo.status === 'completed' ? 'Completed' : 'Pending'}
-                </Badge>
+                {task.dueDate}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <span className={`capitalize font-medium ${getStatusColor(task.status)}`}>
+                    {formatStatus(task.status)}
+                  </span>
+                </div>
               </TableCell>
               <TableCell>
                 <Select
-                  onValueChange={(value: TaskStatus) => openStatusChangeDialog(todo, value)}
+                  onValueChange={(value: TaskStatus) => openStatusDialog(task, value)}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Change status" />
@@ -236,9 +259,9 @@ export function UserDashboard() {
       <StatusChangeDialog
         open={isStatusDialogOpen}
         onOpenChange={setIsStatusDialogOpen}
+        onStatusChange={handleStatusChange}
         task={selectedTask}
-        newStatus={newStatus}
-        onConfirm={handleUpdateStatus}
+        initialStatus={newStatus}
       />
     </div>
   );

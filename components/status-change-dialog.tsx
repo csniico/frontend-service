@@ -2,24 +2,24 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Todo } from '@/lib/types';
+import { Task } from '@/lib/types';
 
 interface StatusChangeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  task: Todo | null;
-  newStatus: 'pending' | 'in-progress' | 'completed' | null;
-  onConfirm: () => void;
+  task: Task | null;
+  initialStatus: string | null;
+  onStatusChange: (taskId: number, status: 'pending' | 'in-progress' | 'completed') => Promise<void>;
 }
 
 export function StatusChangeDialog({
   open,
   onOpenChange,
   task,
-  newStatus,
-  onConfirm,
+  initialStatus,
+  onStatusChange,
 }: StatusChangeDialogProps) {
-  if (!task || !newStatus) return null;
+  if (!task || !initialStatus) return null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -52,18 +52,21 @@ export function StatusChangeDialog({
             Are you sure you want to change the status of task <span className="font-semibold">"{task.title}"</span> to:
           </p>
           <div className="flex items-center justify-center p-3 bg-gray-50 rounded-md">
-            <span className={`text-lg font-medium ${getStatusColor(newStatus)}`}>
-              {formatStatus(newStatus)}
+            <span className={`text-lg font-medium ${getStatusColor(initialStatus)}`}>
+              {formatStatus(initialStatus)}
             </span>
           </div>
+          <p className="mt-2 text-sm text-gray-500">
+            Current status: <span className={`font-medium ${getStatusColor(task.status)}`}>{formatStatus(task.status)}</span>
+          </p>
         </div>
         <DialogFooter className="flex space-x-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button 
-            onClick={() => {
-              onConfirm();
+            onClick={async () => {
+              await onStatusChange(task.id, initialStatus as 'pending' | 'in-progress' | 'completed');
               onOpenChange(false);
             }}
             className="btn-purple"

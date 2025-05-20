@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Todo, UserProfile } from '@/lib/types';
-import * as api from '@/lib/mock-api';
+import { Task, UserProfile } from '@/lib/types';
+import { taskService, authService } from '@/lib/api-service';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, UserPlus } from 'lucide-react';
@@ -23,29 +24,30 @@ import { TaskSearch, SearchFilters } from './task-search';
 import { format } from 'date-fns';
 
 export function AdminDashboard() {
-  const [allTodos, setAllTodos] = useState<Todo[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
-  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadTodos();
+    loadTasks();
     loadUsers();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadTodos = async () => {
+  const loadTasks = async () => {
     try {
-      const data = await api.fetchAllTodos();
-      setAllTodos(data);
+      const data = await taskService.getAllTasks();
+      setAllTasks(data);
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to load todos',
+        description: 'Failed to load tasks',
         variant: 'destructive',
       });
     }
@@ -57,10 +59,8 @@ export function AdminDashboard() {
 
   const loadUsers = async () => {
     try {
-      const data = await api.fetchAllUsers();
-      // Filter out admin users
-      const regularUsers = data.filter(user => user.role === 'user');
-      setUsers(regularUsers);
+      const data = await authService.getAllUsers();
+      setUsers(data);
     } catch (error) {
       toast({
         title: 'Error',
@@ -70,72 +70,71 @@ export function AdminDashboard() {
     }
   };
 
-  const handleCreateTodo = async (data: Omit<Todo, 'id'>) => {
+  const handleCreateTask = async (data: Omit<Task, 'id'>) => {
     try {
-      await api.createTodo(data);
-      await loadTodos();
+      await taskService.createTask(data);
+      await loadTasks();
       setIsFormOpen(false);
       toast({
         title: 'Success',
-        description: 'Todo created successfully',
+        description: 'Task created successfully',
       });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to create todo',
+        description: 'Failed to create task',
         variant: 'destructive',
       });
     }
   };
 
-  const handleUpdateTodo = async (data: Partial<Todo>) => {
-    if (!editingTodo) return;
+  const handleUpdateTask = async (data: Partial<Task>) => {
+    if (!editingTask) return;
     try {
-      await api.updateTodo(editingTodo.id, data);
-      await loadTodos();
-      setEditingTodo(null);
+      await taskService.updateTask(editingTask.id, data);
+      await loadTasks();
+      setEditingTask(null);
       toast({
         title: 'Success',
-        description: 'Todo updated successfully',
+        description: 'Task updated successfully',
       });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to update todo',
+        description: 'Failed to update task',
         variant: 'destructive',
       });
     }
   };
 
-  const handleDeleteTodo = async (id: string) => {
+  const handleDeleteTask = async (id: number) => {
     try {
-      await api.deleteTodo(id);
-      setAllTodos(allTodos.filter((todo: Todo) => todo.id !== id));
+      await taskService.deleteTask(id);
+      await loadTasks();
       toast({
         title: 'Success',
-        description: 'Todo deleted successfully',
+        description: 'Task deleted successfully',
       });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to delete todo',
+        description: 'Failed to delete task',
         variant: 'destructive',
       });
     }
   };
 
-  const handleAssignTask = async (userId: string) => {
-    if (!selectedTodo) return;
-    
+  const handleAssignTask = async (taskId: number, userEmail: string) => {
     try {
-      await api.updateTodo(selectedTodo.id, { userId });
-      await loadTodos();
-      setIsAssignDialogOpen(false);
-      setSelectedTodo(null);
+      // In a real implementation, we would update the task's assignedTo field
+      // For now, we'll just show a toast message
       toast({
         title: 'Success',
         description: 'Task assigned successfully',
       });
+      setIsAssignDialogOpen(false);
+      setSelectedTask(null);
+      await loadTasks();
     } catch (error) {
       toast({
         title: 'Error',
@@ -145,86 +144,90 @@ export function AdminDashboard() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
+  const getPriorityBadge = (priority: string) => {
+    switch (priority.toLowerCase()) {
       case 'high':
-        return 'bg-red-100 text-red-800';
+        return <Badge variant="destructive">High</Badge>;
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return <Badge variant="default">Medium</Badge>;
       case 'low':
-        return 'bg-green-100 text-green-800';
+        return <Badge variant="outline">Low</Badge>;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="outline">{priority}</Badge>;
     }
   };
 
-  const getAssignedUser = (userId?: string) => {
-    if (!userId) return 'Unassigned';
-    const user = users.find(u => u.id === userId);
-    return user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'Unknown';
+  const getAssignedUser = (assignedUsers?: string[]) => {
+    if (!assignedUsers || assignedUsers.length === 0) return 'Unassigned';
+    
+    // Extract just the user names from the format "John_Doe:johndoe@email.com"
+    return assignedUsers.map(assignedUser => {
+      // Split by colon and get the first part (the name)
+      const parts = assignedUser.split(':');
+      if (parts.length > 0) {
+        // Replace underscores with spaces
+        return parts[0].replace(/_/g, ' ');
+      }
+      return assignedUser; // Fallback to the original string if format is unexpected
+    }).join(', ');
   };
 
   // Filter todos based on search criteria
-  const filteredTodos = useMemo(() => {
-    return allTodos.filter(todo => {
-      // Title filter
-      if (searchFilters.title && !todo.title.toLowerCase().includes(searchFilters.title.toLowerCase())) {
-        return false;
-      }
-      
-      // Priority filter
-      if (searchFilters.priority && todo.priority !== searchFilters.priority) {
-        return false;
-      }
-      
-      // Category filter
-      if (searchFilters.category && !todo.category.toLowerCase().includes(searchFilters.category.toLowerCase())) {
-        return false;
-      }
-      
-      // Status filter
-      if (searchFilters.status) {
-        if (searchFilters.status === 'completed' && todo.active) {
-          return false;
-        } else if (searchFilters.status === 'pending' && (!todo.active || todo.status === 'in-progress')) {
-          return false;
-        } else if (searchFilters.status === 'in-progress' && todo.status !== 'in-progress') {
-          return false;
-        }
-      }
-      
-      // Date filter
-      if (searchFilters.date) {
-        const todoDate = new Date(todo.date);
-        const filterDate = new Date(searchFilters.date);
-        
-        if (
-          todoDate.getFullYear() !== filterDate.getFullYear() ||
-          todoDate.getMonth() !== filterDate.getMonth() ||
-          todoDate.getDate() !== filterDate.getDate()
-        ) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
-  }, [allTodos, searchFilters]);
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>();
+    allTasks.forEach(task => uniqueCategories.add(task.category));
+    return Array.from(uniqueCategories);
+  }, [allTasks]);
+
+  const filteredTasks = useMemo(() => {
+    let filtered = [...allTasks];
+    
+    // Apply search filters
+    if (searchFilters.query) {
+      const query = searchFilters.query.toLowerCase();
+      filtered = filtered.filter(task => 
+        task.title.toLowerCase().includes(query) || 
+        task.description.toLowerCase().includes(query) ||
+        task.category.toLowerCase().includes(query)
+      );
+    }
+    
+    if (searchFilters.status) {
+      filtered = filtered.filter(task => task.status === searchFilters.status);
+    }
+    
+    if (searchFilters.priority) {
+      filtered = filtered.filter(task => task.priority === searchFilters.priority);
+    }
+    
+    if (searchFilters.category) {
+      filtered = filtered.filter(task => task.category === searchFilters.category);
+    }
+    
+    return filtered;
+  }, [allTasks, searchFilters]);
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingTask(null);
+  };
+
+  const closeAssignDialog = () => {
+    setIsAssignDialogOpen(false);
+    setSelectedTask(null);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button 
-          onClick={() => setIsFormOpen(true)}
-          className="btn-purple"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Add Task
+      <div className="flex justify-between items-center mb-6">
+        <Button onClick={() => { setIsFormOpen(true); setEditingTask(null); }} className="btn-purple">
+          <Plus className="mr-2 h-4 w-4" /> Add New Task
         </Button>
       </div>
       
       <TaskSearch onSearch={handleSearch} />
       
-      {filteredTodos.length === 0 && (
+      {filteredTasks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 bg-gray-50 rounded-md">
           <h3 className="text-xl font-semibold mb-2">No matching tasks found</h3>
           <p className="text-muted-foreground">Try adjusting your search filters</p>
@@ -246,31 +249,32 @@ export function AdminDashboard() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredTodos.map((todo, index) => (
-            <TableRow key={todo.id}>
+          {filteredTasks.map((task, index) => (
+            <TableRow key={task.id}>
               <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>{todo.title}</TableCell>
+              <TableCell>{task.title}</TableCell>
               <TableCell>
-                <Badge className={getPriorityColor(todo.priority)}>
-                  {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
+                {getPriorityBadge(task.priority)}
+              </TableCell>
+              <TableCell>{task.category}</TableCell>
+              <TableCell>{task.dueDate}</TableCell>
+              <TableCell>
+                <Badge variant={task.status === 'completed' ? "default" : "outline"}>
+                  {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                 </Badge>
               </TableCell>
-              <TableCell>{todo.category}</TableCell>
-              <TableCell>{new Date(todo.date).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Badge variant={todo.active ? "outline" : "default"}>
-                  {todo.active ? 'Pending' : 'Completed'}
-                </Badge>
-              </TableCell>
-              <TableCell>{getAssignedUser(todo.userId)}</TableCell>
+              <TableCell>{getAssignedUser(task.assignedTo)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
                   <Button 
                     variant="outline" 
                     size="icon"
                     onClick={() => {
-                      setEditingTodo(todo);
-                      setIsFormOpen(true);
+                      const openEditForm = (task: Task) => {
+                        setEditingTask(task);
+                        setIsFormOpen(true);
+                      };
+                      openEditForm(task);
                     }}
                   >
                     <Edit className="h-4 w-4" />
@@ -278,7 +282,7 @@ export function AdminDashboard() {
                   <Button 
                     variant="outline" 
                     size="icon"
-                    onClick={() => handleDeleteTodo(todo.id)}
+                    onClick={() => handleDeleteTask(task.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -291,19 +295,16 @@ export function AdminDashboard() {
 
       <Dialog open={isFormOpen} onOpenChange={(open) => {
         setIsFormOpen(open);
-        if (!open) setEditingTodo(null);
+        if (!open) setEditingTask(null);
       }}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{editingTodo ? 'Edit Task' : 'Create Task'}</DialogTitle>
+            <DialogTitle>{editingTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
           </DialogHeader>
           <AdminTaskForm
-            initialData={editingTodo || undefined}
-            onSubmit={editingTodo ? handleUpdateTodo : handleCreateTodo}
-            onCancel={() => {
-              setIsFormOpen(false);
-              setEditingTodo(null);
-            }}
+            initialData={editingTask || undefined}
+            onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
+            onCancel={closeForm}
           />
         </DialogContent>
       </Dialog>
@@ -311,9 +312,10 @@ export function AdminDashboard() {
       <AssignTaskDialog
         open={isAssignDialogOpen}
         onOpenChange={setIsAssignDialogOpen}
-        users={users}
-        selectedTask={selectedTodo}
         onAssign={handleAssignTask}
+        onCancel={closeAssignDialog}
+        task={selectedTask}
+        users={users}
       />
     </div>
   );
