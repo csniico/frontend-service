@@ -1,9 +1,24 @@
 import axios from "axios";
 import { LoginCredentials, RegisterData, UserProfile, Task } from "./types";
 
-// Base URLs for the APIs
-const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
-const TASK_API_URL = process.env.NEXT_PUBLIC_TASK_API_URL;
+// Add type definition for the global window object with APP_CONFIG
+declare global {
+  interface Window {
+    APP_CONFIG?: {
+      AUTH_API_URL: string;
+      TASK_API_URL: string;
+    };
+  }
+}
+
+// Base URLs for the APIs - use runtime config if available, fall back to env vars
+const AUTH_API_URL = typeof window !== 'undefined' && window.APP_CONFIG 
+  ? window.APP_CONFIG.AUTH_API_URL 
+  : process.env.NEXT_PUBLIC_AUTH_API_URL;
+
+const TASK_API_URL = typeof window !== 'undefined' && window.APP_CONFIG 
+  ? window.APP_CONFIG.TASK_API_URL 
+  : process.env.NEXT_PUBLIC_TASK_API_URL;
 
 // Create axios instances with default configs
 const authApi = axios.create({

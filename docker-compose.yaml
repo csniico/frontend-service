@@ -4,6 +4,8 @@ services:
   frontend:
     build: .
     ports:
-      - "3000:3000"
+      - "81:3000"
     environment:
       - NODE_ENV=production
+      - AUTH_API_URL=http://auth-service:9193/api/v1
+      - TASK_API_URL=http://task-service:9191/api/v1

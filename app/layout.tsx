@@ -1,11 +1,8 @@
 import './globals.css';
 import './purple-theme.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth-context';
 import { Toaster } from '@/components/ui/toaster';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'TaskMaster',
@@ -19,7 +16,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <head>
+        {/* Load runtime configuration before any other scripts */}
+        <script src="/config.js" />
+      </head>
+      <body className="font-sans">
         <AuthProvider>
           {children}
           <Toaster />
