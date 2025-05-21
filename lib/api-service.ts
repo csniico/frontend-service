@@ -97,13 +97,13 @@ export const taskService = {
   ): Promise<Task> => {
     try {
       // Use PATCH for status updates, PUT for other updates
-      if (Object.keys(taskData).length === 1 && 'status' in taskData) {
+      if (Object.keys(taskData).length === 1 && "status" in taskData) {
         // For status changes, use PATCH /tasks?id=taskId
         const response = await taskApi.patch(`/tasks?id=${taskId}`, taskData);
         return response.data.data;
       } else {
         // For other updates, use PUT /tasks/taskId
-        const response = await taskApi.put(`/tasks/${taskId}`, taskData);
+        const response = await taskApi.put(`/tasks?id=${taskId}`, taskData);
         return response.data.data;
       }
     } catch (error: any) {

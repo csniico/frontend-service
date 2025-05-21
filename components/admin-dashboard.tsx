@@ -94,6 +94,7 @@ export function AdminDashboard() {
       await taskService.updateTask(editingTask.id, data);
       await loadTasks();
       setEditingTask(null);
+      setIsFormOpen(false); // Close the form dialog
       toast({
         title: 'Success',
         description: 'Task updated successfully',
