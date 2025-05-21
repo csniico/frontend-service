@@ -2,7 +2,7 @@ version: "3"
 
 services:
   frontend:
-    build: .
+    image: godcandidate/frontend-service:latest
     ports:
       - "81:3000"
     environment:
