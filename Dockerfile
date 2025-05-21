@@ -1,6 +1,11 @@
 # Build stage
 FROM node:22.11.0-alpine AS builder
 
+# Upgrade Alpine packages, including vulnerable ones
+RUN apk update && \
+    apk upgrade libcrypto3 libssl3 musl musl-utils && \
+    rm -rf /var/cache/apk/*
+    
 # Set working directory
 WORKDIR /app
 
