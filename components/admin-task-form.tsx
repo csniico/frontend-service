@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { authService } from '@/lib/api-service';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { authService } from "@/lib/api-service";
 import {
   Form,
   FormControl,
@@ -13,34 +13,36 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Task, UserProfile } from '@/lib/types';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
+} from "@/components/ui/select";
+import { Task, UserProfile } from "@/lib/types";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const taskSchema = z.object({
-  title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
-  description: z.string().min(5, { message: 'Description must be at least 5 characters' }),
-  priority: z.enum(['low', 'medium', 'high']),
-  category: z.string().min(1, { message: 'Category is required' }),
-  dueDate: z.string().min(1, { message: 'Due date is required' }),
-  status: z.enum(['pending', 'in-progress', 'completed']).default('pending'),
+  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
+  description: z
+    .string()
+    .min(5, { message: "Description must be at least 5 characters" }),
+  priority: z.enum(["low", "medium", "high"]),
+  category: z.string().min(1, { message: "Category is required" }),
+  dueDate: z.string().min(1, { message: "Due date is required" }),
+  status: z.enum(["pending", "in-progress", "completed"]).default("pending"),
   assignedTo: z.array(z.string()).optional(),
 });
 
@@ -48,11 +50,15 @@ type TaskFormData = z.infer<typeof taskSchema>;
 
 interface AdminTaskFormProps {
   initialData?: Task;
-  onSubmit: (data: Omit<Task, 'id'>) => void;
+  onSubmit: (data: Omit<Task, "id">) => void;
   onCancel: () => void;
 }
 
-export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskFormProps) {
+export function AdminTaskForm({
+  initialData,
+  onSubmit,
+  onCancel,
+}: AdminTaskFormProps) {
   const [date, setDate] = useState<Date | undefined>(
     initialData?.dueDate ? new Date(initialData.dueDate) : undefined
   );
@@ -64,25 +70,25 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
       try {
         const data = await authService.getAllUsers();
         // Filter to only show regular users, not admins
-        const regularUsers = data.filter(user => user.role === 'user');
+        const regularUsers = data.filter((user) => user.role === "user");
         setUsers(regularUsers);
       } catch (error) {
-        console.error('Failed to load users:', error);
+        console.error("Failed to load users:", error);
       }
     };
-    
+
     loadUsers();
   }, []);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: initialData?.title || '',
-      description: initialData?.description || '',
-      priority: initialData?.priority || 'medium',
-      category: initialData?.category || '',
-      dueDate: initialData?.dueDate || '',
-      status: initialData?.status || 'pending',
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      priority: initialData?.priority || "medium",
+      category: initialData?.category || "",
+      dueDate: initialData?.dueDate || "",
+      status: initialData?.status || "pending",
       assignedTo: initialData?.assignedTo || [],
     },
   });
@@ -91,10 +97,18 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
     // The assignedTo field is already correctly formatted in the format ["John_Doe:johndoe@email.com"]
     // when the user selects a user from the dropdown, so we can just pass it directly
     
-    // Log the task data for debugging
-    console.log('Submitting task:', data);
+    // Ensure we're passing a valid Task object (minus the id)
+    const taskData: Omit<Task, "id"> = {
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      category: data.category,
+      dueDate: data.dueDate,
+      status: data.status,
+      assignedTo: data.assignedTo
+    };
     
-    onSubmit(data);
+    onSubmit(taskData);
   };
 
   return (
@@ -186,11 +200,7 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {field.value ? (
-                        field.value
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
+                      {field.value ? field.value : <span>Pick a date</span>}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -203,7 +213,10 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
                       setDate(newDate);
                       if (newDate) {
                         // Format the date as "Saturday, 25th May 2025"
-                        const formattedDate = format(newDate, "EEEE, do MMMM yyyy");
+                        const formattedDate = format(
+                          newDate,
+                          "EEEE, do MMMM yyyy"
+                        );
                         field.onChange(formattedDate);
                       }
                     }}
@@ -224,22 +237,24 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
               <FormLabel>Assign To</FormLabel>
               <Select
                 onValueChange={(value) => {
-                  if (value === 'unassigned') {
+                  if (value === "unassigned") {
                     // Handle unassigned case
                     field.onChange([]);
                     setSelectedUser(null);
                   } else {
                     // Find the selected user
-                    const user = users.find(u => String(u.id) === String(value));
+                    const user = users.find(
+                      (u) => String(u.id) === String(value)
+                    );
                     if (user) {
                       // Store the selected user for display
                       setSelectedUser(user);
-                      
+
                       // Format the assignedTo value correctly for the backend
-                      const firstName = user.firstName || '';
-                      const lastName = user.lastName || '';
-                      let userName = '';
-                      
+                      const firstName = user.firstName || "";
+                      const lastName = user.lastName || "";
+                      let userName = "";
+
                       if (firstName && lastName) {
                         userName = `${firstName}_${lastName}`;
                       } else if (firstName) {
@@ -247,30 +262,32 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
                       } else if (lastName) {
                         userName = lastName;
                       } else {
-                        userName = user.email.split('@')[0];
+                        userName = user.email.split("@")[0];
                       }
-                      
+
                       // Set the formatted value in the form
                       const formattedValue = `${userName}:${user.email}`;
                       field.onChange([formattedValue]);
                     }
                   }
                 }}
-                defaultValue={initialData?.assignedTo?.[0] ? 'assigned' : 'unassigned'}
+                defaultValue={
+                  initialData?.assignedTo?.[0] ? "assigned" : "unassigned"
+                }
               >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a user">
-                      {selectedUser ? (
-                        selectedUser.firstName && selectedUser.lastName
+                      {selectedUser
+                        ? selectedUser.firstName && selectedUser.lastName
                           ? `${selectedUser.firstName} ${selectedUser.lastName}`
                           : selectedUser.email
-                      ) : initialData?.assignedTo?.[0] ? (
-                        // Display the assigned user from initial data
-                        initialData.assignedTo[0].split(':')[0].replace(/_/g, ' ')
-                      ) : (
-                        "Unassigned"
-                      )}
+                        : initialData?.assignedTo?.[0]
+                        ? // Display the assigned user from initial data
+                          initialData.assignedTo[0]
+                            .split(":")[0]
+                            .replace(/_/g, " ")
+                        : "Unassigned"}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
@@ -296,10 +313,7 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -321,7 +335,7 @@ export function AdminTaskForm({ initialData, onSubmit, onCancel }: AdminTaskForm
             Cancel
           </Button>
           <Button type="submit" className="btn-purple">
-            {initialData ? 'Update' : 'Create'} Task
+            {initialData ? "Update" : "Create"} Task
           </Button>
         </div>
       </form>

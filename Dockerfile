@@ -37,7 +37,7 @@ COPY --from=builder /app/out ./out
 COPY --from=builder /app/lib ./lib
 
 # Expose the port that the application will run on
-EXPOSE 3000
+EXPOSE 81
 
 # Start the application
 CMD ["npm", "start"]

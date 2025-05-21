@@ -71,7 +71,6 @@ export const taskService = {
   getUserTasks: async (email: string): Promise<Task[]> => {
     try {
       const response = await taskApi.get(`/tasks/user?email=${email}`);
-      console.log(response);
       return response.data.data;
     } catch (error: any) {
       throw new Error(
@@ -92,7 +91,7 @@ export const taskService = {
 
   // Update an existing task
   updateTask: async (
-    taskId: number,
+    taskId: string,
     taskData: Partial<Task>
   ): Promise<Task> => {
     try {
@@ -112,7 +111,7 @@ export const taskService = {
   },
 
   // Delete a task
-  deleteTask: async (taskId: number): Promise<void> => {
+  deleteTask: async (taskId: string): Promise<void> => {
     try {
       await taskApi.delete(`/tasks?id=${taskId}`);
     } catch (error: any) {

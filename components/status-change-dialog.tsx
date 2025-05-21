@@ -9,7 +9,7 @@ interface StatusChangeDialogProps {
   onOpenChange: (open: boolean) => void;
   task: Task | null;
   initialStatus: string | null;
-  onStatusChange: (taskId: number, status: 'pending' | 'in-progress' | 'completed') => Promise<void>;
+  onStatusChange: (taskId: string, status: 'pending' | 'in-progress' | 'completed') => Promise<void>;
 }
 
 export function StatusChangeDialog({

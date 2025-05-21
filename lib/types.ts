@@ -1,3 +1,4 @@
+// Legacy Todo interface - kept for backward compatibility
 export interface Todo {
   id: string;
   title: string;
@@ -44,13 +45,14 @@ export interface RegisterData {
   role: UserRole;
 }
 
+// Current Task interface used for admin dashboard and task forms
 export interface Task {
-  id: number;
+  id: string; // Changed from number to string for consistency
   title: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
-  assignedTo: string[];
+  assignedTo?: string[]; // Made optional to handle unassigned tasks
   dueDate: string;
   category: string;
 }

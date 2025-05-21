@@ -45,9 +45,10 @@ export function AdminDashboard() {
       const data = await taskService.getAllTasks();
       setAllTasks(data);
     } catch (error) {
+      console.error('Load tasks error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load tasks',
+        description: 'Failed to load tasks: ' + (error instanceof Error ? error.message : 'Network or server issue'),
         variant: 'destructive',
       });
     }
@@ -62,9 +63,10 @@ export function AdminDashboard() {
       const data = await authService.getAllUsers();
       setUsers(data);
     } catch (error) {
+      console.error('Load users error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load users',
+        description: 'Failed to load users: ' + (error instanceof Error ? error.message : 'Network or server issue'),
         variant: 'destructive',
       });
     }
@@ -108,7 +110,7 @@ export function AdminDashboard() {
     }
   };
 
-  const handleDeleteTask = async (id: number) => {
+  const handleDeleteTask = async (id: string) => {
     try {
       await taskService.deleteTask(id);
       await loadTasks();
@@ -117,15 +119,16 @@ export function AdminDashboard() {
         description: 'Task deleted successfully',
       });
     } catch (error) {
+      console.error('Delete task error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete task',
+        description: 'Failed to delete task: ' + (error instanceof Error ? error.message : 'Unknown error'),
         variant: 'destructive',
       });
     }
   };
 
-  const handleAssignTask = async (taskId: number, userEmail: string) => {
+  const handleAssignTask = async (taskId: string, userEmail: string) => {
     try {
       // In a real implementation, we would update the task's assignedTo field
       // For now, we'll just show a toast message
@@ -137,9 +140,10 @@ export function AdminDashboard() {
       setSelectedTask(null);
       await loadTasks();
     } catch (error) {
+      console.error('Assign task error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to assign task',
+        description: 'Failed to assign task: ' + (error instanceof Error ? error.message : 'Unknown error'),
         variant: 'destructive',
       });
     }
@@ -268,7 +272,17 @@ export function AdminDashboard() {
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
                   <Button 
-                    variant="outline" 
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsAssignDialogOpen(true);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
                     size="icon"
                     onClick={() => {
                       const openEditForm = (task: Task) => {
@@ -281,7 +295,7 @@ export function AdminDashboard() {
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="icon"
                     onClick={() => handleDeleteTask(task.id)}
                   >

@@ -49,7 +49,6 @@ export function UserDashboard() {
   const loadUserTasks = async () => {
     try {
       if (user?.email) {
-        console.log(user?.email);
         const data = await taskService.getUserTasks(user.email);
         setUserTasks(data);
       }
@@ -75,7 +74,7 @@ export function UserDashboard() {
   };
 
   const handleStatusChange = async (
-    taskId: number,
+    taskId: string,
     status: "pending" | "in-progress" | "completed"
   ) => {
     try {
@@ -153,22 +152,22 @@ export function UserDashboard() {
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'completed':
-        return 'text-green-600';
-      case 'in-progress':
-        return 'text-blue-600';
-      case 'pending':
-        return 'text-yellow-600';
+      case "completed":
+        return "text-green-600";
+      case "in-progress":
+        return "text-blue-600";
+      case "pending":
+        return "text-yellow-600";
       default:
-        return '';
+        return "";
     }
   };
 
   const formatStatus = (status: string): string => {
     return status
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   if (userTasks.length === 0) {
@@ -226,19 +225,23 @@ export function UserDashboard() {
               </TableCell>
               <TableCell>{getPriorityBadge(task.priority)}</TableCell>
               <TableCell>{task.category}</TableCell>
-              <TableCell>
-                {task.dueDate}
-              </TableCell>
+              <TableCell>{task.dueDate}</TableCell>
               <TableCell>
                 <div className="flex items-center">
-                  <span className={`capitalize font-medium ${getStatusColor(task.status)}`}>
+                  <span
+                    className={`capitalize font-medium ${getStatusColor(
+                      task.status
+                    )}`}
+                  >
                     {formatStatus(task.status)}
                   </span>
                 </div>
               </TableCell>
               <TableCell>
                 <Select
-                  onValueChange={(value: TaskStatus) => openStatusDialog(task, value)}
+                  onValueChange={(value: TaskStatus) =>
+                    openStatusDialog(task, value)
+                  }
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Change status" />

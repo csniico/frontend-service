@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { UserProfile, Todo } from '@/lib/types';
+import { UserProfile, Task } from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -17,22 +17,25 @@ interface AssignTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   users: UserProfile[];
-  selectedTask: Todo | null;
-  onAssign: (userId: string) => void;
+  task: Task | null;
+  onAssign: (taskId: string, userEmail: string) => void;
+  onCancel: () => void;
 }
 
 export function AssignTaskDialog({
   open,
   onOpenChange,
   users,
-  selectedTask,
+  task,
   onAssign,
+  onCancel,
 }: AssignTaskDialogProps) {
-  const [selectedUserId, setSelectedUserId] = useState<string>(selectedTask?.userId || '');
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
 
   const handleAssign = () => {
-    if (selectedUserId) {
-      onAssign(selectedUserId);
+    if (selectedUserId && task) {
+      onAssign(task.id, selectedUserEmail);
     }
   };
 
@@ -43,13 +46,13 @@ export function AssignTaskDialog({
           <DialogTitle>Assign Task</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {selectedTask && (
+          {task && (
             <div className="grid gap-2">
               <Label htmlFor="task-title" className="font-medium">
                 Task
               </Label>
               <div id="task-title" className="text-sm">
-                {selectedTask.title}
+                {task.title}
               </div>
             </div>
           )}
@@ -59,7 +62,14 @@ export function AssignTaskDialog({
             </Label>
             <Select
               value={selectedUserId}
-              onValueChange={setSelectedUserId}
+              onValueChange={(value) => {
+                setSelectedUserId(value);
+                // Find the selected user's email
+                const user = users.find(u => u.id === value);
+                if (user) {
+                  setSelectedUserEmail(user.email);
+                }
+              }}
             >
               <SelectTrigger id="user">
                 <SelectValue placeholder="Select a user" />
@@ -78,7 +88,7 @@ export function AssignTaskDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button onClick={handleAssign} className="btn-purple">
